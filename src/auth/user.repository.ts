@@ -1,30 +1,27 @@
-import {
-  ConflictException,
-  InternalServerErrorException,
-} from '@nestjs/common';
-import { Repository, EntityRepository } from 'typeorm';
-import { AuthCredentialsDto } from './dto/auth-credential.dto';
-import { User } from './user.entity';
-import * as bcrypt from 'bcrypt';
+import { ConflictException, InternalServerErrorException } from '@nestjs/common'
+import { Repository, EntityRepository } from 'typeorm'
+import { AuthCredentialsDto } from './dto/auth-credential.dto'
+import { User } from './user.entity'
+import * as bcrypt from 'bcrypt'
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
   async signUp(authCredentialsDto: AuthCredentialsDto): Promise<void> {
-    const { username, password } = authCredentialsDto;
+    const { username, password } = authCredentialsDto
 
-    const user = new User();
+    const user = new User()
 
-    user.username = username;
-    user.salt = await bcrypt.genSalt();
-    user.password = await this.hashPassword(password, user.salt);
+    user.username = username
+    user.salt = await bcrypt.genSalt()
+    user.password = await this.hashPassword(password, user.salt)
 
     try {
-      await user.save();
+      await user.save()
     } catch (e) {
       if (e.code === '23505') {
-        throw new ConflictException('Username already exists!');
+        throw new ConflictException('Username already exists!')
       } else {
-        throw new InternalServerErrorException();
+        throw new InternalServerErrorException()
       }
     }
   }
@@ -32,16 +29,16 @@ export class UserRepository extends Repository<User> {
   async validateUserPassword(
     authCredentialsDto: AuthCredentialsDto,
   ): Promise<string> {
-    const { username, password } = authCredentialsDto;
-    const user = await this.findOne({ username });
+    const { username, password } = authCredentialsDto
+    const user = await this.findOne({ username })
     if (user && (await user.validatePassword(password))) {
-      return user.username;
+      return user.username
     } else {
-      return null;
+      return null
     }
   }
 
   private async hashPassword(password: string, salt: string): Promise<string> {
-    return bcrypt.hash(password, salt);
+    return bcrypt.hash(password, salt)
   }
 }
